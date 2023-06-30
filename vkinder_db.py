@@ -7,56 +7,48 @@ from sqlalchemy.orm import declarative_base, relationship
 # функция подключения к базе данных book
 def connect_db():
     load_dotenv()
-    password = os.environ['password']
-    DSN = f'postgresql://postgres:{password}@localhost:5432/books'
+    password = os.environ['db_pass']
+    DSN = f'postgresql://postgres:{password}@localhost:5432/vkinder'
     engine = sq.create_engine(DSN)
     Session = sessionmaker(bind=engine)
     session = Session()
     return session, engine
 
 
-
 Base = declarative_base()
 
-class Publisher(Base):
-    __tablename__ = 'publisher'
+class History(Base):
+    __tablename__ = 'history'
 
     id = sq.Column(sq.Integer, primary_key=True)
-    pub_name = sq.Column(sq.Text, nullable=False)
+    link = sq.Column(sq.Text, nullable=False)
+    vk_id = sq.Column(sq.Integer, nullable=False)
 
-class Book(Base):
-    __tablename__ = 'book'
-
-    id = sq.Column(sq.Integer, primary_key=True)
-    title = sq.Column(sq.Text, nullable=False)
-    pub_id = sq.Column(sq.Integer, sq.ForeignKey('publisher.id'))
-    publisher = relationship(Publisher, backref='publisher')
-
-class Shop(Base):
-    __tablename__ = 'shop'
+class Favourites(Base):
+    __tablename__ = 'favourites'
 
     id = sq.Column(sq.Integer, primary_key=True)
-    shop_name = sq.Column(sq.Text)
+    first_name = sq.Column(sq.Text, nullable=False)
+    last_name = sq.Column(sq.Text, nullable=False)
+    gender = sq.Column(sq.Text, nullable=False)
+    city = sq.Column(sq.Text, nullable=False)
+    his_id = sq.Column(sq.Integer, sq.ForeignKey('history.id'))
+    history = relationship(History, backref='history')
 
-class Stock(Base):
-    __tablename__ = 'stock'
-
-    id = sq.Column(sq.Integer, primary_key=True)
-    book_id = sq.Column(sq.Integer, sq.ForeignKey('book.id'))
-    shop_id = sq.Column(sq.Integer, sq.ForeignKey('shop.id'))
-    count = sq.Column(sq.Integer)
-    book = relationship(Book, backref='book')
-    shop = relationship(Shop, backref='shop')
-
-class Sale(Base):
-    __tablename__ = 'sale'
+class Photo(Base):
+    __tablename__ = 'photo'
 
     id = sq.Column(sq.Integer, primary_key=True)
-    price = sq.Column(sq.Numeric(10, 2), nullable=False)
-    date_sale = sq.Column(sq.Date, nullable=False)
-    stock_id = sq.Column(sq.Integer, sq.ForeignKey('stock.id'))
-    count = sq.Column(sq.Integer, nullable=False)
-    stock = relationship(Stock, backref='stock')
+    link = sq.Column(sq.Text, nullable=False)
+    fav_id = sq.Column(sq.Integer, sq.ForeignKey('favourites.id'))
+    favourites = relationship(Favourites, backref='favourites')
+
 
 def create_tables(engine):
     Base.metadata.create_all(engine)
+
+if __name__ == '__main__':
+
+    session, engine = connect_db()
+
+    create_tables(engine)

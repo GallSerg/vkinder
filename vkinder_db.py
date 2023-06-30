@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import sqlalchemy as sq
 from sqlalchemy.orm import declarative_base, relationship
 
-# функция подключения к базе данных book
+# функция подключения к базе данных vkinder
 def connect_db():
     load_dotenv()
     password = os.environ['db_pass']

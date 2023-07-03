@@ -114,7 +114,8 @@ class VkUser:
                     first_name, last_name, gender, city, age = self.get_client(event.user_id)
                     print(first_name, last_name, gender, city)
                     relations = self.get_relationship(gender, city, age)
-                    relations = [elem for elem in relations if not elem['is_closed']]
+                    relations = [elem for elem in relations
+                                 if not elem['is_closed'] and elem['id'] not in self.watched_ids]
                     person = relations.pop(random.randrange(0, len(relations)))
                     user_id = person['id']
                     self.watched_ids.append(user_id)
@@ -124,6 +125,7 @@ class VkUser:
                     if photos:
                         for ph in photos:
                             image = requests.get(ph['url'], stream=True)
+                            print(image)
                             photo = upload.photo_messages(photos=image.raw)[0]
                             attachments.append(
                                 'photo{}_{}'.format(photo['owner_id'], photo['id'])

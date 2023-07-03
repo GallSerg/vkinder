@@ -1,3 +1,4 @@
+import random
 import requests
 import vk_api
 from vk_api import VkUpload
@@ -85,7 +86,7 @@ class VkUser:
         }
         response = requests.get(client_url, params={**self.user_params, **search_params})
         resp = response.json()
-        return resp
+        return resp['response']['items']
 
     def msg_listener(self):
         vk_session = vk_api.VkApi(token=self.group_token)
@@ -96,28 +97,42 @@ class VkUser:
 
         for event in longpoll.listen():
             if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.text:
-                print('id{}: "{}"'.format(event.user_id, event.text), end=' ')
-                attachments = []
-                first_name, last_name, gender, city = self.get_client(event.user_id)
-                print(first_name, last_name, gender, city)
-                print(self.get_relationship(gender, city))
-                user_id = 1
-                self.get_photos(user_id, 'profile')
-                photos = self.get_photos_params()
-                text = 'Лайков: '
-                if photos:
-                    for ph in photos:
-                        image = requests.get(ph['url'], stream=True)
-                        text += str(ph['likes'])+', '
-                        photo = upload.photo_messages(photos=image.raw)[0]
-                        attachments.append(
-                            'photo{}_{}'.format(photo['owner_id'], photo['id'])
-                        )
+                if event.text.lower() in ['привет', 'hi', 'рш', 'ghbdtn', 'прив']:
+                    vk.messages.send(
+                        user_id=event.user_id,
+                        random_id=get_random_id(),
+                        message="Привет, напиши 'далее' или 'поиск', чтобы познакомиться"
+                    )
+                elif event.text.lower() in ['далее', 'continue', 'начнем поиск', 'поиск']:
+                    print('id{}: "{}"'.format(event.user_id, event.text), end=' ')
+                    attachments = []
+                    first_name, last_name, gender, city = self.get_client(event.user_id)
+                    print(first_name, last_name, gender, city)
+                    relations = self.get_relationship(gender, city)
+                    person = relations[random.randrange(0,20)]
+                    user_id = person['id']
+                    self.get_photos(user_id, 'profile')
+                    photos = self.get_photos_params()
+                    text = person['first_name'] + ' ' + person['last_name']
+                    if photos:
+                        for ph in photos:
+                            image = requests.get(ph['url'], stream=True)
+                            photo = upload.photo_messages(photos=image.raw)[0]
+                            attachments.append(
+                                'photo{}_{}'.format(photo['owner_id'], photo['id'])
+                            )
 
-                vk.messages.send(
-                    user_id=event.user_id,
-                    attachment=','.join(attachments),
-                    random_id=get_random_id(),
-                    message=text
-                )
-                print('find user with id', user_id, 'response sent')
+                    vk.messages.send(
+                        user_id=event.user_id,
+                        attachment=','.join(attachments),
+                        random_id=get_random_id(),
+                        message=text
+                    )
+                    print('find user with id', user_id, 'response sent')
+
+                elif event.text.lower() in ['избранное', 'favourites', 'favourite', 'bp,hfyyjt']:
+                    vk.messages.send(
+                        user_id=event.user_id,
+                        random_id=get_random_id(),
+                        message='Увы, избранного пока нет'
+                    )

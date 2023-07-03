@@ -31,7 +31,7 @@ class VkUser:
             'extended': 1,
             'photo_sizes': 0,
             'rev': 1,
-            'count': 3
+            'count': 300
         }
         response = requests.get(photos_url, params={**self.user_params, **photos_params})
         self.cur_photo_json = response.json()

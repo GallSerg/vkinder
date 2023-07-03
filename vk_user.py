@@ -1,6 +1,7 @@
 import random
 import requests
 import vk_api
+from datetime import datetime
 from vk_api import VkUpload
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.utils import get_random_id
@@ -68,14 +69,15 @@ class VkUser:
         client_url = self.url + 'users.get'
         client_params = {
             'user_ids': user_id,
-            'fields': 'sex, city'
+            'fields': 'sex, city, bdate'
         }
         response = requests.get(client_url, params={**self.user_params, **client_params})
         resp = response.json()
+        age =  int((datetime.now() - datetime.strptime(resp['response'][0]['bdate'],"%d.%m.%Y")).days / 365)
         return resp['response'][0]['first_name'], resp['response'][0]['last_name'], \
-            resp['response'][0]['sex'], resp['response'][0]['city']['id']
+            resp['response'][0]['sex'], resp['response'][0]['city']['id'], age
 
-    def get_relationship(self, gender=0, city=99999):
+    def get_relationship(self, gender=0, city=99999, age=40):
         fam_status = 1
         client_url = self.url + 'users.search'
         gender_dict = {1: 2, 2: 1, 0: 0}
@@ -83,7 +85,9 @@ class VkUser:
         search_params = {
             'city': city,
             'sex': gender,
-            'status': fam_status
+            'status': fam_status,
+            'age_from': age-10,
+            'age_to': age+10,
         }
         response = requests.get(client_url, params={**self.user_params, **search_params})
         resp = response.json()
@@ -107,9 +111,9 @@ class VkUser:
                 elif event.text.lower() in ['далее', 'continue', 'начнем поиск', 'поиск']:
                     print('id{}: "{}"'.format(event.user_id, event.text), end=' ')
                     attachments = []
-                    first_name, last_name, gender, city = self.get_client(event.user_id)
+                    first_name, last_name, gender, city, age = self.get_client(event.user_id)
                     print(first_name, last_name, gender, city)
-                    relations = self.get_relationship(gender, city)
+                    relations = self.get_relationship(gender, city, age)
                     relations = [elem for elem in relations if not elem['is_closed']]
                     person = relations.pop(random.randrange(0, len(relations)))
                     user_id = person['id']

@@ -13,6 +13,7 @@ class VkUser:
         self.group_token = group_token
         self.user_token = user_token
         self.cur_photo_json = {}
+        self.watched_ids = []
         self.group_params = {
             'access_token': group_token,
             'v': version
@@ -39,7 +40,7 @@ class VkUser:
         return self.cur_photo_json
 
     @staticmethod
-    def get_likes(self, photos_in_list):
+    def get_likes(photos_in_list):
         if photos_in_list:
             min_i = 0
             min_v = photos_in_list[0]['likes']
@@ -56,7 +57,7 @@ class VkUser:
         for elem in self.cur_photo_json['response']['items']:
             photo = elem['sizes'][-1]
             photo['likes'] = elem['likes']['count']
-            min_v, min_i = self.get_likes(self, three_photos_from_vk_max_likes)
+            min_v, min_i = self.get_likes(three_photos_from_vk_max_likes)
             if len(three_photos_from_vk_max_likes) < 3:
                 three_photos_from_vk_max_likes.append(photo)
             elif photo['likes'] < min_v:
@@ -92,7 +93,7 @@ class VkUser:
         vk_session = vk_api.VkApi(token=self.group_token)
         vk = vk_session.get_api()
 
-        upload = VkUpload(vk_session)  # Для загрузки изображений
+        upload = VkUpload(vk_session)
         longpoll = VkLongPoll(vk_session)
 
         for event in longpoll.listen():
@@ -109,8 +110,10 @@ class VkUser:
                     first_name, last_name, gender, city = self.get_client(event.user_id)
                     print(first_name, last_name, gender, city)
                     relations = self.get_relationship(gender, city)
-                    person = relations[random.randrange(0,20)]
+                    relations = [elem for elem in relations if not elem['is_closed']]
+                    person = relations.pop(random.randrange(0, len(relations)))
                     user_id = person['id']
+                    self.watched_ids.append(user_id)
                     self.get_photos(user_id, 'profile')
                     photos = self.get_photos_params()
                     text = person['first_name'] + ' ' + person['last_name']

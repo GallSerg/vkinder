@@ -117,11 +117,13 @@ class Database():
 
         favourites_list = [i for i in query_info]
 
-        fav_id = favourites_list[0][0]
-        query_photo = session.query(
-            Photo.photo_link).filter(Photo.fav_id == fav_id)
+        fav_ids = [elem[0] for elem in favourites_list]
 
-        photo_list = [i for i in query_photo]
+        photo_list = []
+        for id in fav_ids:
+            query_photo = session.query(
+                Photo.photo_link).filter(Photo.fav_id == id)
+            photo_list.append(tuple([i[0] for i in query_photo]))
 
         return favourites_list, photo_list
 

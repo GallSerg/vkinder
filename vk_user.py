@@ -148,13 +148,15 @@ class VkUser:
         for event in longpoll.listen():
             if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.text:
                 if event.text.lower() in ['привет', 'hi', 'рш', 'ghbdtn', 'прив', 'начнем', 'старт']:
+                    print(f"id{event.user_id}: '{event.text}'")
                     vk.messages.send(
                         user_id=event.user_id,
                         random_id=get_random_id(),
                         message="Привет, напиши 'далее' или 'поиск', чтобы найти вторую половинку"
                     )
+                    print('hello response sent')
                 elif event.text.lower() in ['далее', 'continue', 'начнем поиск', 'поиск']:
-                    print(f'id{event.user_id}: "{event.text}"', end=' ')
+                    print(f"id{event.user_id}: '{event.text}'", end=' ')
                     attachments = []
                     first_name, last_name, gender, city, age = self.get_client(event.user_id)
                     print(first_name, last_name, gender, city)
@@ -170,16 +172,16 @@ class VkUser:
                             attachments.append(
                                 f"photo{photo['owner_id']}_{photo['id']}"
                             )
-
                     vk.messages.send(
                         user_id=event.user_id,
                         attachment=','.join(attachments),
                         random_id=get_random_id(),
                         message=text
                     )
-                    print('find user with id', user_id, 'response sent')
+                    print(f"find user with id {user_id}, response sent")
 
                 elif event.text.lower() in ['добавить', 'add', 'lj,fdbnm', 'фвв']:
+                    print(f"id{event.user_id}: '{event.text}'")
                     if person:
                         if person['id'] not in [key for i in self.favourites for key in i.keys()]:
                             self.favourites.append({person['id']: [person['first_name'], person['last_name']]})
@@ -188,20 +190,24 @@ class VkUser:
                                 random_id=get_random_id(),
                                 message=f"{person['first_name']} {person['last_name']} добавлен(-а) в избранное"
                             )
+                            print(f"user {person['id']} added to favourites")
                         else:
                             vk.messages.send(
                                 user_id=event.user_id,
                                 random_id=get_random_id(),
                                 message=f"{person['first_name']} {person['last_name']} уже есть в избранном"
                             )
+                            print(f"user {person['id']} is already in favourites")
                     else:
                         vk.messages.send(
                             user_id=event.user_id,
                             random_id=get_random_id(),
                             message='Сначала нужно сделать запрос'
                         )
+                        print("'no person yet' response sent ")
 
                 elif event.text.lower() in ['избранное', 'favourites', 'favourite', 'bp,hfyyjt']:
+                    print(f"id{event.user_id}: '{event.text}'")
                     if self.favourites:
                         for elem in self.favourites:
                             for names in elem.values():
@@ -210,9 +216,11 @@ class VkUser:
                                     random_id=get_random_id(),
                                     message=' '.join(names)
                                 )
+                        print('favourites sent')
                     else:
                         vk.messages.send(
                             user_id=event.user_id,
                             random_id=get_random_id(),
                             message='У вас никого нет в избранном'
                         )
+                        print('no favourites sent')

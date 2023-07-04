@@ -5,7 +5,9 @@ from dotenv.main import load_dotenv
 from sqlalchemy.orm import sessionmaker
 from model_db import History, User, Photo, Favourites
 
+
 def connect_db():
+    ''' Connecting to the database. '''
     load_dotenv()
     password = os.environ['db_pass']
     DSN = f'postgresql://postgres:{password}@localhost:5432/vkinder'
@@ -14,19 +16,26 @@ def connect_db():
     session = Session()
     return session, engine
 
+
 class Database():
 
-    # Проверка на уникальность юзера
     def uniq_user(self, user_vk_id):
+        '''
+        Checking for the uniqueness of the user by the page id.
+        Accepts the page id, returns True or False.
+        '''
 
-        query = session.query(User.user_vk_id).filter(
-            User.user_vk_id == user_vk_id)
+        query = session.query(
+            User.user_vk_id).filter(User.user_vk_id == user_vk_id)
 
         return len([i[0] for i in query]) == 0
 
 
-    # Добавление нового юзера и возврат его идентификатора
     def add_user(self, user_vk_id, first_name, last_name, city, age, gender):
+        '''
+        Accepts user_vk_id, first_name, last_name, city, age,
+        gender and adds to the database.
+        '''
 
         if self.uniq_user(user_vk_id):
             new_user = User(
@@ -38,42 +47,54 @@ class Database():
             return new_user.id
 
 
-    # Получение ида юзера по вк иду
     def user_id(self, user_vk_id):
+        '''
+        Accepts the user's page id and returns its ID in the database.
+        '''
 
         query = session.query(User.id).filter(User.user_vk_id == user_vk_id)
 
         return int([i for i in query][0][0])
 
 
-    # Получение истории просмотров:
-    def history(self):
+    def history(self, user_vk_id):
+        '''
+        Accepts the user's page id and returns a list of viewed pages
+        from the database.
+        '''
 
-        query = session.query(History.vk_id).select_from(History)
+        id = self.user_id(user_vk_id)
+        query = session.query(History.vk_id).filter(History.user_id == id)
+
         return [i[0] for i in query]
 
 
-    # добавление в историю просмотров,
-    def add_history(self, user_id, vk_id):
+    def add_history(self, user_vk_id, vk_id):
+        '''
+        Accepts the user's page id and the id of the viewed page,
+        adds an entry to the browsing history.
+        '''
 
-        session.add(History(user_id=user_id, vk_id=vk_id))
+        id = self.user_id(user_vk_id)
+        session.add(History(user_id=id, vk_id=vk_id))
         session.commit()
 
 
-    # добавление в избранное и возврат идентификатора
-    def add_favourites(self, first_name, last_name, vk_link, user_id):
+    def add_favourites(
+            self, user_vk_id, first_name, last_name, vk_link, photo_list):
+        '''
+        Accepts data about the viewed person (first_name, last_name,
+        vk_link and a list of links to photos) and adds it to the database.
+        '''
 
+        id = self.user_id(user_vk_id)
         new_favourites = Favourites(
             first_name=first_name, last_name=last_name,
-            vk_link=vk_link, user_id=user_id)
+            vk_link=vk_link, user_id=id)
 
         session.add(new_favourites)
         session.commit()
-        return new_favourites.id
-
-
-    # Добавление ссылок на фото в отдельную таблицу
-    def add_photo(self, fav_id, photo_list: list):
+        fav_id = new_favourites.id
 
         for item in photo_list:
             session.add(Photo(fav_id=fav_id, photo_link=item))
@@ -81,6 +102,11 @@ class Database():
 
 
     def show_favourites(self, user_vk_id):
+        '''
+        The output of favorites by the user's page id. Return a list
+        with basic information and a list with links to photos.
+        '''
+
         user_id = self.user_id(user_vk_id)
 
         query_info = session.query(
@@ -93,13 +119,24 @@ class Database():
 
         fav_id = favourites_list[0][0]
 
-        query_photo = session.query(Photo.photo_link).filter(
-            Photo.fav_id == fav_id)
+        query_photo = session.query(
+            Photo.photo_link).filter(Photo.fav_id == fav_id)
 
         photo_list = [i for i in query_photo]
 
         return favourites_list, photo_list
 
+    def check_favourites(self, user_vk_id, vk_link):
+        '''
+        Checking for a link in favorites. Accepts a link to the page of the
+        viewed person and the user's page id. Returns True or False.
+        '''
+
+        id = self.user_id(user_vk_id)
+        query = session.query(
+            Favourites.vk_link).filter(Favourites.user_id == id)
+
+        return vk_link in [i[0] for i in query]
 
 
 if __name__ == '__main__':
@@ -109,7 +146,3 @@ if __name__ == '__main__':
     create_tables(engine)
 
     test = Database()
-
-    favourites_list, photo_list = test.show_favourites('1')
-
-    print(photo_list)

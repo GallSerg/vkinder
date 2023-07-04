@@ -18,45 +18,89 @@ class Database():
 
     # Проверка на уникальность юзера
     def uniq_user(self, user_vk_id):
+
         query = session.query(User.user_vk_id).filter(
             User.user_vk_id == user_vk_id)
+
         return len([i[0] for i in query]) == 0
+
 
     # Добавление нового юзера и возврат его идентификатора
     def add_user(self, user_vk_id, first_name, last_name, city, age, gender):
+
         if self.uniq_user(user_vk_id):
-            new_user = User(user_vk_id=user_vk_id, first_name=first_name,
-                            last_name=last_name, city=city, age=age,
-                            gender=gender)
+            new_user = User(
+                user_vk_id=user_vk_id, first_name=first_name,
+                last_name=last_name, city=city, age=age, gender=gender)
             session.add(new_user)
             session.commit()
 
             return new_user.id
 
 
+    # Получение ида юзера по вк иду
+    def user_id(self, user_vk_id):
+
+        query = session.query(User.id).filter(User.user_vk_id == user_vk_id)
+
+        return int([i for i in query][0][0])
+
+
     # Получение истории просмотров:
     def history(self):
+
         query = session.query(History.vk_id).select_from(History)
         return [i[0] for i in query]
 
+
     # добавление в историю просмотров,
     def add_history(self, user_id, vk_id):
+
         session.add(History(user_id=user_id, vk_id=vk_id))
         session.commit()
 
+
     # добавление в избранное и возврат идентификатора
     def add_favourites(self, first_name, last_name, vk_link, user_id):
-        new_favourites = Favourites(first_name=first_name, last_name=last_name,
-                                    vk_link=vk_link, user_id=user_id)
+
+        new_favourites = Favourites(
+            first_name=first_name, last_name=last_name,
+            vk_link=vk_link, user_id=user_id)
+
         session.add(new_favourites)
         session.commit()
         return new_favourites.id
 
+
     # Добавление ссылок на фото в отдельную таблицу
     def add_photo(self, fav_id, photo_list: list):
+
         for item in photo_list:
             session.add(Photo(fav_id=fav_id, photo_link=item))
             session.commit()
+
+
+    def show_favourites(self, user_vk_id):
+        user_id = self.user_id(user_vk_id)
+
+        query_info = session.query(
+            Favourites.id,
+            Favourites.first_name,
+            Favourites.last_name,
+            Favourites.vk_link).filter(Favourites.user_id == user_id)
+
+        favourites_list = [i for i in query_info]
+
+        fav_id = favourites_list[0][0]
+
+        query_photo = session.query(Photo.photo_link).filter(
+            Photo.fav_id == fav_id)
+
+        photo_list = [i for i in query_photo]
+
+        return favourites_list, photo_list
+
+
 
 if __name__ == '__main__':
 
@@ -65,3 +109,7 @@ if __name__ == '__main__':
     create_tables(engine)
 
     test = Database()
+
+    favourites_list, photo_list = test.show_favourites('1')
+
+    print(photo_list)

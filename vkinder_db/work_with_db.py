@@ -1,6 +1,5 @@
 import os
 import sqlalchemy as sq
-from model_db import create_tables
 from dotenv.main import load_dotenv
 from sqlalchemy.orm import sessionmaker
 from model_db import History, User, Photo, Favourites
@@ -139,11 +138,3 @@ class Database():
 
         return vk_link in [i[0] for i in query]
 
-
-if __name__ == '__main__':
-
-    session, engine = connect_db()
-
-    create_tables(engine)
-
-    test = Database()

@@ -158,6 +158,7 @@ class VkUser:
                         random_id=get_random_id(),
                         message="Привет, напиши 'далее' или 'поиск', чтобы найти вторую половинку"
                     )
+                    # db check
                     self.db.add_user(event.user_id)
                     print(self.db.user_id)
                     print('hello response sent')

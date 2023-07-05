@@ -7,6 +7,6 @@ if __name__ == '__main__':
 
     session, engine = connect_db()
     create_tables(engine)
-    test = Database(session)
-    vk_client = vk.VkUser('5.131')
+    db = Database(session)
+    vk_client = vk.VkUser(db, '5.131')
     vk_client.msg_listener()

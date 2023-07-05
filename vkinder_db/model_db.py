@@ -3,12 +3,14 @@ from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
+
 class History(Base):
     __tablename__ = 'history'
 
     id = sq.Column(sq.Integer, primary_key=True)
     vk_id = sq.Column(sq.Text, nullable=False)
     user_id = sq.Column(sq.Integer, sq.ForeignKey('user.id'))
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -22,6 +24,7 @@ class User(Base):
     age = sq.Column(sq.Integer, nullable=False)
     history_conn = relationship(History, backref='history')
 
+
 class Favourites(Base):
     __tablename__ = 'favourites'
 
@@ -31,6 +34,7 @@ class Favourites(Base):
     vk_link = sq.Column(sq.Text, nullable=False)
     user_id = sq.Column(sq.Integer, sq.ForeignKey('user.id'))
     favourites_conn = relationship(User, backref='user')
+
 
 class Photo(Base):
     __tablename__ = 'photo'

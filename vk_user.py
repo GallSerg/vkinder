@@ -16,8 +16,9 @@ class VkUser:
     """
     url = 'https://api.vk.com/method/'
 
-    def __init__(self, version):
+    def __init__(self, db, version):
         load_dotenv()
+        self.db = db
         self.group_token = os.environ['vk_group_token']
         self.user_token = os.environ['vk_user_token']
         self.watched_ids = []
@@ -157,6 +158,8 @@ class VkUser:
                         random_id=get_random_id(),
                         message="Привет, напиши 'далее' или 'поиск', чтобы найти вторую половинку"
                     )
+                    self.db.add_user(event.user_id)
+                    print(self.db.user_id)
                     print('hello response sent')
                 elif event.text.lower() in ['далее', 'continue', 'начнем поиск', 'поиск']:
                     print(f"id{event.user_id}: '{event.text}'", end=' ')

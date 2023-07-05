@@ -2,7 +2,7 @@ import os
 import sqlalchemy as sq
 from dotenv.main import load_dotenv
 from sqlalchemy.orm import sessionmaker
-from model_db import History, User, Photo, Favourites
+from vkinder_db.model_db import History, User, Photo, Favourites
 
 
 def connect_db():
@@ -46,14 +46,14 @@ class Database:
         gender and adds to the database.
         """
 
-        if self.check_user(user_vk_id):
+        if not self.check_user(user_vk_id):
             new_user = User(
                 user_vk_id=user_vk_id, first_name=first_name,
                 last_name=last_name, city=city, age=age, gender=gender)
             self.session.add(new_user)
             self.session.commit()
 
-            return new_user.id
+            # return new_user.id
 
     def check_history(self, user_vk_id, vk_id):
         """

@@ -1,6 +1,8 @@
+import os
 import requests
 import vk_api
 from datetime import datetime
+from dotenv import load_dotenv
 from vk_api import VkUpload
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.utils import get_random_id
@@ -14,18 +16,19 @@ class VkUser:
     """
     url = 'https://api.vk.com/method/'
 
-    def __init__(self, group_token, user_token, version):
-        self.group_token = group_token
-        self.user_token = user_token
+    def __init__(self, version):
+        load_dotenv()
+        self.group_token = os.environ['vk_group_token']
+        self.user_token = os.environ['vk_user_token']
         self.watched_ids = []
         self.favourites = []
         self.offset = 0
         self.group_params = {
-            'access_token': group_token,
+            'access_token': self.group_token,
             'v': version
         }
         self.user_params = {
-            'access_token': user_token,
+            'access_token': self.user_token,
             'v': version
         }
 

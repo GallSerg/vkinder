@@ -97,7 +97,6 @@ if __name__ == '__main__':
                     owner_id, id = photo['owner_id'], photo['id']
                     attchments.append(f'photo{owner_id}_{id}')
 
-                print(attchments)
                 keyboard = VkKeyboard(one_time=True)
                 keyboard.add_button('Выход')
                 keyboard.add_button('Далее')
@@ -126,7 +125,6 @@ if __name__ == '__main__':
                 db_manage.add_favourites(user_id, first_name, last_name,
                                          vk_link, attchments)
 
-                print(attchments)
                 keyboard = VkKeyboard(one_time=True)
                 keyboard.add_button('Выход')
                 keyboard.add_button('Далее')

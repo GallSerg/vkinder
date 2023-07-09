@@ -66,7 +66,8 @@ class Database:
         """
         Updating the user search offset.
         """
-        self.session.query(User).filter(User.user_vk_id == user_vk_id).update({User.offset: User.offset + 1})
+        self.session.query(User).filter(User.user_vk_id == user_vk_id).update(
+            {User.offset: User.offset + 1})
         self.session.commit()
 
     def check_history(self, user_vk_id, vk_id):

@@ -49,11 +49,25 @@ class Database:
         if not self.check_user(user_vk_id):
             new_user = User(
                 user_vk_id=user_vk_id, first_name=first_name,
-                last_name=last_name, city=city, age=age, gender=gender)
+                last_name=last_name, city=city, age=age,
+                gender=gender, offset=0)
             self.session.add(new_user)
             self.session.commit()
 
-            # return new_user.id
+    def offset(self, user_vk_id):
+        """
+        Offset by user search.
+        """
+        query = self.session.query(User.offset).filter(
+            User.user_vk_id == user_vk_id)
+        return [item[0] for item in query][0]
+
+    def update_offset(self, user_vk_id):
+        """
+        Updating the user search offset.
+        """
+        self.session.query(User).filter(User.user_vk_id == user_vk_id).update({User.offset: User.offset + 1})
+        self.session.commit()
 
     def check_history(self, user_vk_id, vk_id):
         """
@@ -66,6 +80,18 @@ class Database:
 
         return vk_id in [i[0] for i in query]
 
+
+    def last_histoty(self, user_vk_id):
+        """
+        Show the last entry from the user's history.
+        """
+
+        id = self.user_id(user_vk_id)
+        query = self.session.query(History.vk_id).filter(History.user_id == id)
+
+        return [vk_id[0] for vk_id in query][-1]
+
+
     def add_history(self, user_vk_id, vk_id):
         """
         Accepts the user's page id and the id of the viewed page,
@@ -75,6 +101,7 @@ class Database:
         id = self.user_id(user_vk_id)
         self.session.add(History(user_id=id, vk_id=vk_id))
         self.session.commit()
+
 
     def check_favourites(self, user_vk_id, vk_link):
         """
@@ -88,6 +115,7 @@ class Database:
 
         return vk_link in [i[0] for i in query]
 
+
     def add_favourites(
             self, user_vk_id, first_name, last_name, vk_link, photo_list):
         """
@@ -95,7 +123,7 @@ class Database:
         vk_link and a list of links to photos) and adds it to the database.
         """
 
-        if self.check_favourites(user_vk_id, vk_link):
+        if not self.check_favourites(user_vk_id, vk_link):
             id = self.user_id(user_vk_id)
             new_favourites = Favourites(
                 first_name=first_name, last_name=last_name,
@@ -108,6 +136,7 @@ class Database:
             for item in photo_list:
                 self.session.add(Photo(fav_id=fav_id, photo_link=item))
                 self.session.commit()
+
 
     def show_favourites(self, user_vk_id):
         """
@@ -123,7 +152,7 @@ class Database:
             Favourites.last_name,
             Favourites.vk_link).filter(Favourites.user_id == user_id)
 
-        favourites_list = [i for i in query_info]
+        favourites_list = [item for item in query_info]
 
         fav_ids = [elem[0] for elem in favourites_list]
 
@@ -131,7 +160,7 @@ class Database:
         for id in fav_ids:
             query_photo = self.session.query(
                 Photo.photo_link).filter(Photo.fav_id == id)
-            photo_list.append(tuple([i[0] for i in query_photo]))
+            photo_list.append([item[0] for item in query_photo])
 
         return favourites_list, photo_list
 

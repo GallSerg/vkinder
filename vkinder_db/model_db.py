@@ -14,12 +14,13 @@ class User(Base):
     __tablename__ = 'user'
 
     id = sq.Column(sq.Integer, primary_key=True)
-    user_vk_id = sq.Column(sq.Text, nullable=False)
+    user_vk_id = sq.Column(sq.Integer, nullable=False)
     first_name = sq.Column(sq.Text, nullable=False)
     last_name = sq.Column(sq.Text, nullable=False)
     city = sq.Column(sq.Text, nullable=False)
     gender = sq.Column(sq.Text, nullable=False)
     age = sq.Column(sq.Integer, nullable=False)
+    offset = sq.Column(sq.Integer, nullable=False)
     history_conn = relationship(History, backref='history')
 
 class Favourites(Base):

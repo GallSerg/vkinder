@@ -63,13 +63,13 @@ if __name__ == '__main__':
                           f'Показать избранное - кнопка "Избранное"'
 
                 send_message(user_id, message, keyboard)
+                db_manage.update_offset(user_id)
 
             if text in ['поиск', 'далее']:
 
                 vk_manage.offset = db_manage.offset(user_id)
                 rel_id = vk_manage.get_relationship(gender, city, age)
 
-                print(vk_manage.offset)
 
                 vk_id, vk_link, first_name, last_name, \
                     gender, city, age = vk_manage.gets_client(rel_id)

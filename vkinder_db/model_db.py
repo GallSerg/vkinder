@@ -7,7 +7,7 @@ class History(Base):
     __tablename__ = 'history'
 
     id = sq.Column(sq.Integer, primary_key=True)
-    vk_id = sq.Column(sq.Text, nullable=False)
+    vk_id = sq.Column(sq.Integer, nullable=False)
     user_id = sq.Column(sq.Integer, sq.ForeignKey('user.id'))
 
 class User(Base):

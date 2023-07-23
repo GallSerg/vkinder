@@ -1,5 +1,4 @@
 import os
-import requests
 import vk_api
 from dotenv import load_dotenv
 from vk_api import VkUpload

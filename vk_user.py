@@ -1,32 +1,27 @@
-import os
 import requests
-import vk_api
-from dotenv import load_dotenv
 from datetime import datetime
-
+from concurrent.futures import ThreadPoolExecutor
+from collections import namedtuple
 
 class VkUser:
 
-    def __init__(self, group_token, user_token):
+    def __init__(self, group_token, user_token, upload):
         self.offset = 0
         self.url = 'https://api.vk.com/method/'
         self.group_params = {'access_token': group_token, 'v': '5.131'}
         self.user_params = {'access_token': user_token, 'v': '5.131'}
         self.rel_dict = {}
         self.last_show = {}
+        self.upload = upload
 
 
     def gets_client(self, client_id):
 
         client_url = self.url + 'users.get'
-        client_params = {'user_ids': client_id,
-                         'fields': 'sex, city, bdate, screen_name'}
+        client_params = {'user_ids': client_id, 'fields': 'sex, city, bdate, screen_name'}
 
         params = {**self.user_params, **client_params}
         response = requests.get(client_url, params=params)
-
-        print(response.json())
-
         items = response.json()['response'][0]
         items_keys = list(items.keys())
 
@@ -41,19 +36,21 @@ class VkUser:
         bdate = items['bdate'] if 'bdate' in items_keys else '01.01.2020'
 
         if bdate.count('.') == 2:
-            age = int((datetime.now() -
-                       datetime.strptime(bdate, "%d.%m.%Y")).days / 365)
-            if age < 23:
-                age = 23
+            age = int((datetime.now() - datetime.strptime(bdate, "%d.%m.%Y")).days / 365)
         else:
             age = 23
 
-        return vk_user_id, vk_link, first_name, last_name, gender, city, age
+        lst = ['user_id', 'vk_link', 'first_name', 'last_name', 'gender', 'city', 'age']
+        Client = namedtuple('Client', lst)
+        client = Client(vk_user_id, vk_link, first_name, last_name, gender, city, age)
+
+        return client
 
 
     def rel_search(self, gender=0, city=0, age=40):
 
         rel_list = []
+        age = age if age >= 23 else 23
 
         client_url = self.url + 'users.search'
         gender = {1: 2, 2: 1, 0: 0}[gender]
@@ -76,13 +73,15 @@ class VkUser:
         return rel_list
 
     def rel_info(self, user_id):
-        vk_user_id, vk_link, first_name, last_name,\
-            gender, city, age = self.gets_client(user_id)
+        client = self.gets_client(user_id)
+        first_name = client.first_name
+        last_name = client.last_name
+        vk_link = client.vk_link
 
         return first_name, last_name, vk_link
 
 
-    def get_photos(self, user_id, upload):
+    def get_photos(self, user_id):
         photos_url = self.url + 'photos.get'
         photos_params = {'owner_id': user_id,
                          'offset': 0,
@@ -94,7 +93,6 @@ class VkUser:
         response = requests.get(photos_url, params=params)
         items = response.json()['response']['items']
         links_row = []
-        attachments = []
 
         for item in items:
             photo_item = ()
@@ -112,23 +110,13 @@ class VkUser:
 
         photo_links = [link[0] for link in links_row[0:3]]
 
-        if len(photo_links) > 0:
-            for item in photo_links:
-                image = requests.get(item, stream=True)
-                photo = upload.photo_messages(photos=image.raw)[0]
-                owner_id, id = photo['owner_id'], photo['id']
-                attachments.append(f'photo{owner_id}_{id}')
+        with ThreadPoolExecutor(max_workers=len(photo_links)) as pool:
+            downloaded = tuple(pool.map(self.download, photo_links))
 
-        return attachments
+        return list(downloaded)
 
-if __name__ == '__main__':
-    load_dotenv()
-    group_token = os.environ['vk_group_token']
-    user_token = os.environ['vk_bot_token']
-
-    vk_session = vk_api.VkApi(token=group_token)
-    vk = vk_session.get_api()
-
-    vk_manage = VkUser(group_token, user_token)
-
-    print(vk_manage.gets_client('uzao32'))
+    def download(self, link):
+        image = requests.get(link, stream=True)
+        photo = self.upload.photo_messages(photos=image.raw)[0]
+        owner_id, id = photo['owner_id'], photo['id']
+        return f'photo{owner_id}_{id}'

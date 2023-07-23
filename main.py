@@ -21,7 +21,7 @@ if __name__ == '__main__':
     upload = VkUpload(vk_session)
     longpoll = VkLongPoll(vk_session)
 
-    vk_manage = VkUser(group_token, user_token)
+    vk_manage = VkUser(group_token, user_token, upload)
     message = Message(vk_session)
 
     session, engine = connect_db(db_password)
@@ -35,14 +35,18 @@ if __name__ == '__main__':
             key = str(user_id)
 
             if str(user_id) not in vk_manage.rel_dict:
-                vk_user_id, vk_link, first_name, last_name, \
-                    gender, city, age = vk_manage.gets_client(user_id)
+                client = vk_manage.gets_client(user_id)
 
-                db_manage.add_user(vk_user_id, first_name,
-                                   last_name, city, age, gender)
+                vk_user_id = client.user_id
+                first_name = client.first_name
+                last_name = client.last_name
+                gender = client.gender
+                city = client.city
+                age = client.city
 
-                vk_manage.rel_dict[str(user_id)] = \
-                    vk_manage.rel_search(gender, city, age)
+                db_manage.add_user(vk_user_id, first_name, last_name, city, age, gender)
+
+                vk_manage.rel_dict[str(user_id)] = vk_manage.rel_search(gender, city, age)
 
 
             if text not in ['поиск', 'далее', 'в избранное', 'избранное']:
@@ -53,7 +57,7 @@ if __name__ == '__main__':
 
                 first_name, last_name, vk_link = vk_manage.rel_info(rel_id)
 
-                photos = vk_manage.get_photos(rel_id, upload)
+                photos = vk_manage.get_photos(rel_id)
 
                 messages = ' '.join([first_name, last_name]) + f' - {vk_link}'
                 message.next(user_id, messages, photos)

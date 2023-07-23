@@ -1,5 +1,6 @@
 import os
 import vk_api
+import atexit
 from dotenv import load_dotenv
 from vk_api import VkUpload
 from vk_api.longpoll import VkLongPoll, VkEventType
@@ -27,6 +28,7 @@ if __name__ == '__main__':
     session, engine = connect_db(db_password)
     db_manage = Database(session)
     create_tables(engine)
+    atexit.register(engine.dispose)
 
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
@@ -42,7 +44,7 @@ if __name__ == '__main__':
                 last_name = client.last_name
                 gender = client.gender
                 city = client.city
-                age = client.city
+                age = client.age
 
                 db_manage.add_user(vk_user_id, first_name, last_name, city, age, gender)
 
@@ -52,11 +54,9 @@ if __name__ == '__main__':
             if text not in ['поиск', 'далее', 'в избранное', 'избранное']:
                 message.hello(user_id)
 
-            if text in ['поиск', 'далее']:
+            elif text in ['поиск', 'далее']:
                 rel_id = vk_manage.rel_dict[key].pop(0)
-
                 first_name, last_name, vk_link = vk_manage.rel_info(rel_id)
-
                 photos = vk_manage.get_photos(rel_id)
 
                 messages = ' '.join([first_name, last_name]) + f' - {vk_link}'
@@ -67,22 +67,17 @@ if __name__ == '__main__':
             elif text == 'в избранное':
 
                 last_id = db_manage.last_histoty(user_id)
-
-                vk_id, vk_link, first_name, last_name, \
-                    gender, city, age = vk_manage.gets_client(last_id)
+                client = vk_manage.gets_client(last_id)
+                first_name = client.first_name
+                last_name = client.last_name
+                vk_link = client.vk_link
 
                 messages = f'{first_name} {last_name} добавлен(а) в избранное.'
                 message.add_favourites(user_id, messages)
 
                 photos = vk_manage.get_photos(last_id, upload)
-
-                db_manage.add_favourites(user_id, first_name, last_name,
-                                         vk_link, photos)
+                db_manage.add_favourites(user_id, first_name, last_name, vk_link, photos)
 
             elif text == 'избранное':
                 favourites_list, photo_list = db_manage.show_favourites(user_id)
-
                 message.show_favourites(user_id, favourites_list, photo_list)
-
-
-
